@@ -25,7 +25,10 @@ const (
 type menuItem struct {
 	title       string
 	description string
-	run         func() (action, string)
+	run         func() (
+		action,
+		string,
+	)
 }
 
 type menu struct {
@@ -64,11 +67,23 @@ func Run(
 	svc *app.Service,
 	dbPath string,
 ) error {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	oldState, err := term.MakeRaw(
+		int(
+			os.Stdin.Fd(),
+		),
+	)
 	if err != nil {
-		return fmt.Errorf("enable raw terminal: %w", err)
+		return fmt.Errorf(
+			"enable raw terminal: %w",
+			err,
+		)
 	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	defer term.Restore(
+		int(
+			os.Stdin.Fd(),
+		),
+		oldState,
+	)
 
 	r := &runner{
 		ctx:      ctx,
@@ -115,7 +130,10 @@ func (r *runner) main() error {
 					{
 						title:       "Quit",
 						description: "Exit Pinter",
-						run: func() (action, string) {
+						run: func() (
+							action,
+							string,
+						) {
 							return actionQuit, ""
 						},
 					},
@@ -137,7 +155,11 @@ func (r *runner) main() error {
 func (r *runner) show(
 	m menu,
 	status string,
-) (action, string, error) {
+) (
+	action,
+	string,
+	error,
+) {
 	index := 0
 	for {
 		r.render(
@@ -203,7 +225,10 @@ func (r *runner) render(
 	}
 }
 
-func (r *runner) hosts() (action, string) {
+func (r *runner) hosts() (
+	action,
+	string,
+) {
 	items, err := r.svc.ListHosts(
 		r.ctx,
 		"",
@@ -231,7 +256,9 @@ func (r *runner) hosts() (action, string) {
 			}
 			last := "-"
 			if host.LastConnectedAt != nil {
-				last = host.LastConnectedAt.Local().Format("2006-01-02 15:04")
+				last = host.LastConnectedAt.Local().Format(
+					"2006-01-02 15:04",
+				)
 			}
 			format(
 				"%s%-18s %s@%s:%d  last=%s\r\n",
@@ -280,7 +307,10 @@ func (r *runner) hosts() (action, string) {
 	}
 }
 
-func (r *runner) addHost() (action, string) {
+func (r *runner) addHost() (
+	action,
+	string,
+) {
 	input, err := r.promptHost()
 	if err != nil {
 		return actionNone, err.Error()
@@ -299,7 +329,10 @@ func (r *runner) addHost() (action, string) {
 	return actionNone, "Added " + host.Alias
 }
 
-func (r *runner) importSSHConfig() (action, string) {
+func (r *runner) importSSHConfig() (
+	action,
+	string,
+) {
 	clear()
 	line("Import SSH config")
 	line()
@@ -323,7 +356,10 @@ func (r *runner) importSSHConfig() (action, string) {
 	)
 }
 
-func (r *runner) history() (action, string) {
+func (r *runner) history() (
+	action,
+	string,
+) {
 	items, err := r.svc.History(
 		r.ctx,
 		20,
@@ -343,7 +379,9 @@ func (r *runner) history() (action, string) {
 		for _, item := range items {
 			format(
 				"%s  %-18s  %s  %s\r\n",
-				item.StartedAt.Local().Format(time.RFC3339),
+				item.StartedAt.Local().Format(
+					time.RFC3339,
+				),
 				item.AliasSnapshot,
 				item.TerminalApp,
 				item.Command,
@@ -356,7 +394,10 @@ func (r *runner) history() (action, string) {
 	return actionNone, ""
 }
 
-func (r *runner) status() (action, string) {
+func (r *runner) status() (
+	action,
+	string,
+) {
 	hosts, err := r.svc.ListHosts(
 		r.ctx,
 		"",
@@ -386,7 +427,10 @@ func (r *runner) status() (action, string) {
 	return actionNone, ""
 }
 
-func (r *runner) promptHost() (model.HostInput, error) {
+func (r *runner) promptHost() (
+	model.HostInput,
+	error,
+) {
 	clear()
 	line("Add host")
 	line()
@@ -427,7 +471,10 @@ func (r *runner) promptHost() (model.HostInput, error) {
 	if portText != "" {
 		parsed, err := strconv.Atoi(portText)
 		if err != nil {
-			return model.HostInput{}, fmt.Errorf("invalid port: %w", err)
+			return model.HostInput{}, fmt.Errorf(
+				"invalid port: %w",
+				err,
+			)
 		}
 		port = parsed
 	}
@@ -442,7 +489,10 @@ func (r *runner) promptHost() (model.HostInput, error) {
 	}, nil
 }
 
-func (r *runner) readKey() (key, error) {
+func (r *runner) readKey() (
+	key,
+	error,
+) {
 	b, err := r.reader.ReadByte()
 	if err != nil {
 		return keyUnknown, err
@@ -487,7 +537,10 @@ func (r *runner) readKey() (key, error) {
 
 func (r *runner) readLine(
 	label string,
-) (string, error) {
+) (
+	string,
+	error,
+) {
 	if err := r.suspendRaw(); err != nil {
 		return "", err
 	}
@@ -502,24 +555,41 @@ func (r *runner) readLine(
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimRight(value, "\r\n"), nil
+	return strings.TrimRight(
+		value,
+		"\r\n",
+	), nil
 }
 
 func (r *runner) suspendRaw() error {
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
+	if !term.IsTerminal(
+		int(
+			os.Stdin.Fd(),
+		),
+	) {
 		return nil
 	}
 	return term.Restore(
-		int(os.Stdin.Fd()),
+		int(
+			os.Stdin.Fd(),
+		),
 		r.oldState,
 	)
 }
 
 func (r *runner) resumeRaw() error {
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
+	if !term.IsTerminal(
+		int(
+			os.Stdin.Fd(),
+		),
+	) {
 		return nil
 	}
-	state, err := term.MakeRaw(int(os.Stdin.Fd()))
+	state, err := term.MakeRaw(
+		int(
+			os.Stdin.Fd(),
+		),
+	)
 	if err != nil {
 		return err
 	}
@@ -556,9 +626,11 @@ func write(
 		"\r\n",
 		"\n",
 	)
-	fmt.Print(strings.ReplaceAll(
-		value,
-		"\n",
-		"\r\n",
-	))
+	fmt.Print(
+		strings.ReplaceAll(
+			value,
+			"\n",
+			"\r\n",
+		),
+	)
 }

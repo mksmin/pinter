@@ -119,7 +119,7 @@ go run ./cmd/pinter history
 ## Build Binary
 
 ```bash
-go build -o build/pinter ./cmd/pinter
+make build
 ```
 
 Open TUI from built binary:
@@ -151,7 +151,7 @@ go build ./...
 Build CLI binary:
 
 ```bash
-go build -o build/pinter ./cmd/pinter
+make build
 ```
 
 Run TUI smoke manually:

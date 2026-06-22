@@ -11,14 +11,29 @@ import (
 
 func Open(
 	path string,
-) (*sql.DB, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return nil, fmt.Errorf("create data directory: %w", err)
+) (
+	*sql.DB,
+	error,
+) {
+	if err := os.MkdirAll(
+		filepath.Dir(path),
+		0o700,
+	); err != nil {
+		return nil, fmt.Errorf(
+			"create data directory: %w",
+			err,
+		)
 	}
 
-	conn, err := sql.Open("sqlite", path)
+	conn, err := sql.Open(
+		"sqlite",
+		path,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("open sqlite: %w", err)
+		return nil, fmt.Errorf(
+			"open sqlite: %w",
+			err,
+		)
 	}
 
 	if err := migrate(conn); err != nil {
@@ -64,7 +79,10 @@ func migrate(
 
 	for _, stmt := range statements {
 		if _, err := conn.Exec(stmt); err != nil {
-			return fmt.Errorf("migrate sqlite: %w", err)
+			return fmt.Errorf(
+				"migrate sqlite: %w",
+				err,
+			)
 		}
 	}
 	return nil

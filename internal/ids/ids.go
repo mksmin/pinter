@@ -8,10 +8,16 @@ import (
 
 func New(
 	prefix string,
-) (string, error) {
+) (
+	string,
+	error,
+) {
 	var b [12]byte
 	if _, err := rand.Read(b[:]); err != nil {
-		return "", fmt.Errorf("generate id: %w", err)
+		return "", fmt.Errorf(
+			"generate id: %w",
+			err,
+		)
 	}
 	return prefix + "_" + hex.EncodeToString(b[:]), nil
 }

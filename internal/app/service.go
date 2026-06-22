@@ -21,7 +21,10 @@ type Service struct {
 
 func NewService(
 	dbPath string,
-) (*Service, error) {
+) (
+	*Service,
+	error,
+) {
 	conn, err := db.Open(dbPath)
 	if err != nil {
 		return nil, err
@@ -40,7 +43,10 @@ func (s *Service) Close() error {
 func (s *Service) AddHost(
 	ctx context.Context,
 	input model.HostInput,
-) (model.Host, error) {
+) (
+	model.Host,
+	error,
+) {
 	return s.hosts.Create(
 		ctx,
 		input,
@@ -50,7 +56,10 @@ func (s *Service) AddHost(
 func (s *Service) ListHosts(
 	ctx context.Context,
 	query string,
-) ([]model.Host, error) {
+) (
+	[]model.Host,
+	error,
+) {
 	return s.hosts.List(
 		ctx,
 		query,
@@ -60,13 +69,20 @@ func (s *Service) ListHosts(
 func (s *Service) Connect(
 	ctx context.Context,
 	alias string,
-) (model.ConnectionHistory, error) {
+) (
+	model.ConnectionHistory,
+	error,
+) {
 	host, err := s.hosts.GetByAlias(
 		ctx,
 		alias,
 	)
 	if err != nil {
-		return model.ConnectionHistory{}, fmt.Errorf("find host %q: %w", alias, err)
+		return model.ConnectionHistory{}, fmt.Errorf(
+			"find host %q: %w",
+			alias,
+			err,
+		)
 	}
 
 	startedAt := time.Now().UTC()
@@ -93,7 +109,10 @@ func (s *Service) Connect(
 func (s *Service) History(
 	ctx context.Context,
 	limit int,
-) ([]model.ConnectionHistory, error) {
+) (
+	[]model.ConnectionHistory,
+	error,
+) {
 	return s.hosts.History(
 		ctx,
 		limit,
@@ -103,7 +122,11 @@ func (s *Service) History(
 func (s *Service) ImportSSHConfig(
 	ctx context.Context,
 	path string,
-) (int, int, error) {
+) (
+	int,
+	int,
+	error,
+) {
 	if path == "" {
 		path = sshconfig.DefaultConfigPath()
 	}

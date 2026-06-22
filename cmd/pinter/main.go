@@ -19,7 +19,11 @@ import (
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "pinter:", err)
+		fmt.Fprintln(
+			os.Stderr,
+			"pinter:",
+			err,
+		)
 		os.Exit(1)
 	}
 }
@@ -91,7 +95,10 @@ func run(
 		usage()
 		return nil
 	default:
-		return fmt.Errorf("unknown command %q", args[0])
+		return fmt.Errorf(
+			"unknown command %q",
+			args[0],
+		)
 	}
 }
 
@@ -155,7 +162,13 @@ func add(
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Added %s (%s@%s:%d)\n", host.Alias, host.Username, host.Hostname, host.Port)
+	fmt.Printf(
+		"Added %s (%s@%s:%d)\n",
+		host.Alias,
+		host.Username,
+		host.Hostname,
+		host.Port,
+	)
 	return nil
 }
 
@@ -197,17 +210,32 @@ func list(
 		' ',
 		0,
 	)
-	fmt.Fprintln(w, "ALIAS\tTARGET\tKEY\tLAST CONNECTED\tNOTES")
+	fmt.Fprintln(
+		w,
+		"ALIAS\tTARGET\tKEY\tLAST CONNECTED\tNOTES",
+	)
 	for _, host := range items {
 		last := "-"
 		if host.LastConnectedAt != nil {
-			last = host.LastConnectedAt.Local().Format("2006-01-02 15:04")
+			last = host.LastConnectedAt.Local().Format(
+				"2006-01-02 15:04",
+			)
 		}
 		key := "-"
 		if host.IdentityFile != "" {
 			key = host.IdentityFile
 		}
-		fmt.Fprintf(w, "%s\t%s@%s:%d\t%s\t%s\t%s\n", host.Alias, host.Username, host.Hostname, host.Port, key, last, oneLine(host.Notes))
+		fmt.Fprintf(
+			w,
+			"%s\t%s@%s:%d\t%s\t%s\t%s\n",
+			host.Alias,
+			host.Username,
+			host.Hostname,
+			host.Port,
+			key,
+			last,
+			oneLine(host.Notes),
+		)
 	}
 	return w.Flush()
 }
@@ -227,8 +255,15 @@ func connect(
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Opened %s with %s\n", entry.AliasSnapshot, entry.TerminalApp)
-	fmt.Printf("%s\n", entry.Command)
+	fmt.Printf(
+		"Opened %s with %s\n",
+		entry.AliasSnapshot,
+		entry.TerminalApp,
+	)
+	fmt.Printf(
+		"%s\n",
+		entry.Command,
+	)
 	return nil
 }
 
@@ -270,9 +305,21 @@ func history(
 		' ',
 		0,
 	)
-	fmt.Fprintln(w, "WHEN\tALIAS\tTERMINAL\tCOMMAND")
+	fmt.Fprintln(
+		w,
+		"WHEN\tALIAS\tTERMINAL\tCOMMAND",
+	)
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", item.StartedAt.Local().Format(time.RFC3339), item.AliasSnapshot, item.TerminalApp, item.Command)
+		fmt.Fprintf(
+			w,
+			"%s\t%s\t%s\t%s\n",
+			item.StartedAt.Local().Format(
+				time.RFC3339,
+			),
+			item.AliasSnapshot,
+			item.TerminalApp,
+			item.Command,
+		)
 	}
 	return w.Flush()
 }
@@ -301,12 +348,17 @@ func importSSHConfig(
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Imported SSH config: %s created, %s updated\n", strconv.Itoa(created), strconv.Itoa(updated))
+	fmt.Printf(
+		"Imported SSH config: %s created, %s updated\n",
+		strconv.Itoa(created),
+		strconv.Itoa(updated),
+	)
 	return nil
 }
 
 func usage() {
-	fmt.Println(`pinter - local SSH keeper
+	fmt.Println(
+		`pinter - local SSH keeper
 
 Usage:
   pinter add --alias prod --host 10.0.0.1 --user deploy --key ~/.ssh/prod
@@ -317,13 +369,18 @@ Usage:
 
 Environment:
   PINTER_DB_PATH    Override SQLite database path
-  PINTER_DATA_DIR   Override data directory`)
+  PINTER_DATA_DIR   Override data directory`,
+	)
 }
 
 func oneLine(
 	value string,
 ) string {
-	value = strings.ReplaceAll(value, "\n", " ")
+	value = strings.ReplaceAll(
+		value,
+		"\n",
+		" ",
+	)
 	if len(value) > 48 {
 		return value[:45] + "..."
 	}

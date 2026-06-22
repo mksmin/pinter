@@ -19,13 +19,18 @@ type Repository struct {
 func NewRepository(
 	db *sql.DB,
 ) *Repository {
-	return &Repository{db: db}
+	return &Repository{
+		db: db,
+	}
 }
 
 func (r *Repository) Create(
 	ctx context.Context,
 	input model.HostInput,
-) (model.Host, error) {
+) (
+	model.Host,
+	error,
+) {
 	input = normalizeInput(input)
 	if err := validateInput(input); err != nil {
 		return model.Host{}, err
@@ -67,7 +72,10 @@ func (r *Repository) Create(
 		formatTime(host.UpdatedAt),
 	)
 	if err != nil {
-		return model.Host{}, fmt.Errorf("create host: %w", err)
+		return model.Host{}, fmt.Errorf(
+			"create host: %w",
+			err,
+		)
 	}
 	return host, nil
 }
@@ -75,7 +83,11 @@ func (r *Repository) Create(
 func (r *Repository) UpsertByAlias(
 	ctx context.Context,
 	input model.HostInput,
-) (model.Host, bool, error) {
+) (
+	model.Host,
+	bool,
+	error,
+) {
 	existing, err := r.GetByAlias(
 		ctx,
 		input.Alias,
@@ -98,7 +110,10 @@ func (r *Repository) UpsertByAlias(
 		)
 		return updated, false, err
 	}
-	if !errors.Is(err, sql.ErrNoRows) {
+	if !errors.Is(
+		err,
+		sql.ErrNoRows,
+	) {
 		return model.Host{}, false, err
 	}
 
@@ -135,11 +150,17 @@ func (r *Repository) Update(
 		id,
 	)
 	if err != nil {
-		return fmt.Errorf("update host: %w", err)
+		return fmt.Errorf(
+			"update host: %w",
+			err,
+		)
 	}
 	n, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("update host rows affected: %w", err)
+		return fmt.Errorf(
+			"update host rows affected: %w",
+			err,
+		)
 	}
 	if n == 0 {
 		return sql.ErrNoRows
@@ -150,7 +171,10 @@ func (r *Repository) Update(
 func (r *Repository) List(
 	ctx context.Context,
 	query string,
-) ([]model.Host, error) {
+) (
+	[]model.Host,
+	error,
+) {
 	query = strings.TrimSpace(query)
 	args := []any{}
 	sqlQuery := `SELECT id, alias, hostname, port, username, identity_file, notes, favorite,
@@ -158,7 +182,13 @@ func (r *Repository) List(
 	if query != "" {
 		like := "%" + query + "%"
 		sqlQuery += ` WHERE alias LIKE ? OR hostname LIKE ? OR username LIKE ? OR notes LIKE ?`
-		args = append(args, like, like, like, like)
+		args = append(
+			args,
+			like,
+			like,
+			like,
+			like,
+		)
 	}
 	sqlQuery += ` ORDER BY favorite DESC, COALESCE(last_connected_at, created_at) DESC, alias ASC`
 
@@ -168,7 +198,10 @@ func (r *Repository) List(
 		args...,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("list hosts: %w", err)
+		return nil, fmt.Errorf(
+			"list hosts: %w",
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -178,10 +211,16 @@ func (r *Repository) List(
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, host)
+		out = append(
+			out,
+			host,
+		)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("list hosts rows: %w", err)
+		return nil, fmt.Errorf(
+			"list hosts rows: %w",
+			err,
+		)
 	}
 	return out, nil
 }
@@ -189,7 +228,10 @@ func (r *Repository) List(
 func (r *Repository) GetByAlias(
 	ctx context.Context,
 	alias string,
-) (model.Host, error) {
+) (
+	model.Host,
+	error,
+) {
 	row := r.db.QueryRowContext(
 		ctx,
 		`SELECT id, alias, hostname, port, username, identity_file, notes, favorite,
@@ -202,7 +244,10 @@ func (r *Repository) GetByAlias(
 func (r *Repository) GetByID(
 	ctx context.Context,
 	id string,
-) (model.Host, error) {
+) (
+	model.Host,
+	error,
+) {
 	row := r.db.QueryRowContext(
 		ctx,
 		`SELECT id, alias, hostname, port, username, identity_file, notes, favorite,
@@ -225,7 +270,10 @@ func (r *Repository) MarkConnected(
 		hostID,
 	)
 	if err != nil {
-		return fmt.Errorf("mark connected: %w", err)
+		return fmt.Errorf(
+			"mark connected: %w",
+			err,
+		)
 	}
 	return nil
 }
@@ -236,7 +284,10 @@ func (r *Repository) AddHistory(
 	command string,
 	terminalApp string,
 	startedAt time.Time,
-) (model.ConnectionHistory, error) {
+) (
+	model.ConnectionHistory,
+	error,
+) {
 	id, err := ids.New("hstlog")
 	if err != nil {
 		return model.ConnectionHistory{}, err
@@ -263,7 +314,10 @@ func (r *Repository) AddHistory(
 		entry.TerminalApp,
 	)
 	if err != nil {
-		return model.ConnectionHistory{}, fmt.Errorf("add history: %w", err)
+		return model.ConnectionHistory{}, fmt.Errorf(
+			"add history: %w",
+			err,
+		)
 	}
 	return entry, nil
 }
@@ -271,7 +325,10 @@ func (r *Repository) AddHistory(
 func (r *Repository) History(
 	ctx context.Context,
 	limit int,
-) ([]model.ConnectionHistory, error) {
+) (
+	[]model.ConnectionHistory,
+	error,
+) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
@@ -283,7 +340,10 @@ func (r *Repository) History(
 		limit,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("list history: %w", err)
+		return nil, fmt.Errorf(
+			"list history: %w",
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -293,10 +353,16 @@ func (r *Repository) History(
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, entry)
+		out = append(
+			out,
+			entry,
+		)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("list history rows: %w", err)
+		return nil, fmt.Errorf(
+			"list history rows: %w",
+			err,
+		)
 	}
 	return out, nil
 }
@@ -345,7 +411,10 @@ type hostScanner interface {
 
 func scanHost(
 	scanner hostScanner,
-) (model.Host, error) {
+) (
+	model.Host,
+	error,
+) {
 	var host model.Host
 	var favorite int
 	var lastConnected sql.NullString
@@ -388,7 +457,10 @@ func scanHost(
 
 func scanHistory(
 	scanner hostScanner,
-) (model.ConnectionHistory, error) {
+) (
+	model.ConnectionHistory,
+	error,
+) {
 	var entry model.ConnectionHistory
 	var startedAt string
 	var exitStatus sql.NullInt64
@@ -423,8 +495,14 @@ func formatTime(
 
 func parseTime(
 	value string,
-) (time.Time, error) {
-	return time.Parse(time.RFC3339Nano, value)
+) (
+	time.Time,
+	error,
+) {
+	return time.Parse(
+		time.RFC3339Nano,
+		value,
+	)
 }
 
 func boolToInt(

@@ -22,7 +22,10 @@ type ParsedHost struct {
 
 func Parse(
 	r io.Reader,
-) ([]ParsedHost, error) {
+) (
+	[]ParsedHost,
+	error,
+) {
 	scanner := bufio.NewScanner(r)
 	var hosts []ParsedHost
 	var current *ParsedHost
@@ -40,7 +43,10 @@ func Parse(
 		if current.Username == "" {
 			current.Username = "root"
 		}
-		hosts = append(hosts, *current)
+		hosts = append(
+			hosts,
+			*current,
+		)
 		current = nil
 	}
 
@@ -85,7 +91,10 @@ func Parse(
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("parse ssh config: %w", err)
+		return nil, fmt.Errorf(
+			"parse ssh config: %w",
+			err,
+		)
 	}
 	commit()
 	return hosts, nil
@@ -93,10 +102,16 @@ func Parse(
 
 func ParseFile(
 	path string,
-) ([]ParsedHost, error) {
+) (
+	[]ParsedHost,
+	error,
+) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("open ssh config: %w", err)
+		return nil, fmt.Errorf(
+			"open ssh config: %w",
+			err,
+		)
 	}
 	defer file.Close()
 	return Parse(file)
@@ -107,7 +122,11 @@ func DefaultConfigPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".ssh", "config")
+	return filepath.Join(
+		home,
+		".ssh",
+		"config",
+	)
 }
 
 func (h ParsedHost) HostInput() model.HostInput {
@@ -124,7 +143,10 @@ func cleanLine(
 	line string,
 ) string {
 	line = strings.TrimSpace(line)
-	if line == "" || strings.HasPrefix(line, "#") {
+	if line == "" || strings.HasPrefix(
+		line,
+		"#",
+	) {
 		return ""
 	}
 
@@ -153,10 +175,20 @@ func cleanLine(
 
 func splitDirective(
 	line string,
-) (string, string, bool) {
-	if idx := strings.Index(line, "="); idx > 0 {
+) (
+	string,
+	string,
+	bool,
+) {
+	if idx := strings.Index(
+		line,
+		"=",
+	); idx > 0 {
 		key := strings.TrimSpace(line[:idx])
-		value := strings.Trim(strings.TrimSpace(line[idx+1:]), `"'`)
+		value := strings.Trim(
+			strings.TrimSpace(line[idx+1:]),
+			`"'`,
+		)
 		return key, value, key != "" && value != ""
 	}
 
@@ -164,23 +196,38 @@ func splitDirective(
 	if len(fields) < 2 {
 		return "", "", false
 	}
-	return fields[0], strings.Trim(strings.Join(fields[1:], " "), `"'`), true
+	return fields[0], strings.Trim(
+		strings.Join(
+			fields[1:],
+			" ",
+		),
+		`"'`,
+	), true
 }
 
 func isWildcardHost(
 	value string,
 ) bool {
-	return strings.ContainsAny(value, "*?!")
+	return strings.ContainsAny(
+		value,
+		"*?!",
+	)
 }
 
 func expandIdentityFile(
 	value string,
 ) string {
 	value = strings.TrimSpace(value)
-	if strings.HasPrefix(value, "~/") {
+	if strings.HasPrefix(
+		value,
+		"~/",
+	) {
 		home, err := os.UserHomeDir()
 		if err == nil {
-			return filepath.Join(home, value[2:])
+			return filepath.Join(
+				home,
+				value[2:],
+			)
 		}
 	}
 	return value
