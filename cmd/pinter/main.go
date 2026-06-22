@@ -14,6 +14,7 @@ import (
 	"pinter/internal/app"
 	"pinter/internal/config"
 	"pinter/internal/model"
+	"pinter/internal/tui"
 )
 
 func main() {
@@ -27,8 +28,21 @@ func run(
 	args []string,
 ) error {
 	if len(args) == 0 {
-		usage()
-		return nil
+		dbPath, err := config.DBPath()
+		if err != nil {
+			return err
+		}
+		svc, err := app.NewService(dbPath)
+		if err != nil {
+			return err
+		}
+		defer svc.Close()
+
+		return tui.Run(
+			context.Background(),
+			svc,
+			dbPath,
+		)
 	}
 
 	dbPath, err := config.DBPath()

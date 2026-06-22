@@ -1,6 +1,6 @@
 # Project Structure
 
-Pinter MVP is CLI-only. One Go binary. No GUI frameworks.
+Pinter MVP is CLI + TUI. One Go binary. No GUI frameworks.
 
 ## Top Level
 
@@ -24,6 +24,7 @@ CLI path:
 cmd/pinter/main.go
   -> internal/config
   -> internal/app.Service
+  -> internal/tui.Run when no args
   -> internal/hosts.Repository
   -> internal/db SQLite
 ```
@@ -60,12 +61,15 @@ CLI only. Parses args and flags. Prints output. Exits with non-zero code on erro
 Commands:
 
 ```text
+pinter
 pinter add
 pinter list
 pinter connect
 pinter history
 pinter import-ssh-config
 ```
+
+No args opens TUI. Subcommands stay script-friendly.
 
 Keep handlers thin. Real behavior belongs in `internal/app`.
 
@@ -191,6 +195,37 @@ launcher_windows.go
 launcher_unix.go
 ```
 
+### `internal/tui`
+
+Terminal UI. No GUI framework.
+
+Uses:
+
+```text
+golang.org/x/term
+```
+
+Owns:
+
+- ASCII logo
+- main menu
+- hosts browser
+- add host prompts
+- import prompt
+- history view
+- status view
+
+Controls:
+
+```text
+Up/Down or K/J
+Enter
+B Back
+Q Quit
+```
+
+Keep this package UI-only. Business logic stays in `internal/app`.
+
 ## Data Model
 
 ### `hosts`
@@ -280,4 +315,3 @@ internal/vault
 internal/db schema
 internal/model credential refs
 ```
-

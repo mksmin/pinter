@@ -1,6 +1,6 @@
 # Pinter
 
-Local SSH keeper MVP. CLI-only. Stores hosts in SQLite, imports `~/.ssh/config` on explicit command, opens SSH in macOS Terminal via system `ssh`.
+Local SSH keeper MVP. CLI + TUI. Stores hosts in SQLite, imports `~/.ssh/config` on explicit command, opens SSH in macOS Terminal via system `ssh`.
 
 No GUI frameworks. No Wails. No frontend.
 
@@ -32,6 +32,12 @@ export PINTER_DATA_DIR="$PWD/.cache/pinter"
 `GOCACHE="$PWD/.cache/go-build"` only needed inside restricted sandbox. Normal local run does not need it.
 
 ## Run
+
+Open TUI:
+
+```bash
+go run ./cmd/pinter
+```
 
 Help:
 
@@ -99,6 +105,12 @@ Run built binary:
 ./build/pinter list
 ```
 
+Open TUI from built binary:
+
+```bash
+./build/pinter
+```
+
 ## Verify
 
 Run tests:
@@ -143,10 +155,9 @@ go run ./cmd/pinter connect smoke
 
 ## Current Limits
 
-- No GUI.
+- TUI only. No GUI.
 - No passwords/passphrases stored.
 - Uses local `ssh`, key files, and `ssh-agent`.
 - SSH config import skips wildcard hosts like `Host *` and `Host prod-*`.
 - SSH config `Include` is not supported yet.
 - History records launch time, not remote shell exit code.
-
