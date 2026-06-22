@@ -621,24 +621,24 @@ func (r *runner) readKey() (
 	key,
 	error,
 ) {
-	b, err := r.reader.ReadByte()
+	runeValue, _, err := r.reader.ReadRune()
 	if err != nil {
 		return keyUnknown, err
 	}
 
-	switch b {
-	case 'q', 'Q':
+	switch runeValue {
+	case 'q', 'Q', 'й', 'Й':
 		return keyQuit, nil
-	case 'b', 'B':
+	case 'b', 'B', 'и', 'И':
 		return keyBack, nil
+	case 'c', 'C', 'с', 'С':
+		return keyConnect, nil
 	case '\r', '\n':
 		return keyEnter, nil
-	case 'k', 'K':
-		return keyUp, nil
-	case 'j', 'J':
+	case 'k', 'K', 'л', 'Л':
 		return keyDown, nil
-	case 'c', 'C':
-		return keyConnect, nil
+	case 'j', 'J', 'о', 'О':
+		return keyUp, nil
 	case 27:
 		next, err := r.reader.ReadByte()
 		if err != nil {
@@ -659,7 +659,7 @@ func (r *runner) readKey() (
 		}
 	}
 
-	if b >= '1' && b <= '9' {
+	if runeValue >= '1' && runeValue <= '9' {
 		return keyEnter, nil
 	}
 	return keyUnknown, nil
