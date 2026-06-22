@@ -4,6 +4,20 @@ Local SSH keeper MVP. CLI + TUI. Stores hosts in SQLite, imports `~/.ssh/config`
 
 No GUI frameworks. No Wails. No frontend.
 
+## Status
+
+Current focus: CLI + TUI MVP.
+
+Done:
+
+- TUI main menu.
+- Host add/list/connect/history.
+- Explicit SSH config import.
+- SQLite local DB.
+- macOS Terminal.app launch.
+
+Next work lives in [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Requirements
 
 - Go 1.26+
@@ -37,6 +51,15 @@ Open TUI:
 
 ```bash
 go run ./cmd/pinter
+```
+
+TUI controls:
+
+```text
+Up/Down or K/J
+Enter
+B Back
+Q Quit
 ```
 
 Help:
@@ -99,16 +122,16 @@ go run ./cmd/pinter history
 go build -o build/pinter ./cmd/pinter
 ```
 
-Run built binary:
-
-```bash
-./build/pinter list
-```
-
 Open TUI from built binary:
 
 ```bash
 ./build/pinter
+```
+
+Run built binary command:
+
+```bash
+./build/pinter list
 ```
 
 ## Verify
@@ -130,6 +153,14 @@ Build CLI binary:
 ```bash
 go build -o build/pinter ./cmd/pinter
 ```
+
+Run TUI smoke manually:
+
+```bash
+go run ./cmd/pinter
+```
+
+Then press `Q`.
 
 ## Smoke Test
 
@@ -161,3 +192,8 @@ go run ./cmd/pinter connect smoke
 - SSH config import skips wildcard hosts like `Host *` and `Host prod-*`.
 - SSH config `Include` is not supported yet.
 - History records launch time, not remote shell exit code.
+
+## Docs
+
+- [Project structure](docs/PROJECT_STRUCTURE.md)
+- [Development roadmap](docs/ROADMAP.md)
