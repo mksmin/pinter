@@ -168,6 +168,34 @@ func (r *Repository) Update(
 	return nil
 }
 
+func (r *Repository) Delete(
+	ctx context.Context,
+	id string,
+) error {
+	res, err := r.db.ExecContext(
+		ctx,
+		`DELETE FROM hosts WHERE id = ?`,
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"delete host: %w",
+			err,
+		)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf(
+			"delete host rows affected: %w",
+			err,
+		)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func (r *Repository) List(
 	ctx context.Context,
 	query string,

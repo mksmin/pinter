@@ -53,6 +53,27 @@ func (s *Service) AddHost(
 	)
 }
 
+func (s *Service) DeleteHost(
+	ctx context.Context,
+	alias string,
+) error {
+	host, err := s.hosts.GetByAlias(
+		ctx,
+		alias,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"find host %q: %w",
+			alias,
+			err,
+		)
+	}
+	return s.hosts.Delete(
+		ctx,
+		host.ID,
+	)
+}
+
 func (s *Service) ListHosts(
 	ctx context.Context,
 	query string,

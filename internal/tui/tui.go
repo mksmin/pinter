@@ -46,6 +46,7 @@ const (
 	keyQuit
 	keyBack
 	keyConnect
+	keyDelete
 )
 
 const logo = ` ____  _       _            
@@ -333,6 +334,19 @@ func (r *runner) hosts() (
 			if result == actionQuit {
 				return actionQuit, ""
 			}
+			items, err = r.svc.ListHosts(
+				r.ctx,
+				"",
+			)
+			if err != nil {
+				return actionNone, err.Error()
+			}
+			if len(items) == 0 {
+				return actionNone, nextStatus
+			}
+			if index >= len(items) {
+				index = len(items) - 1
+			}
 			status = nextStatus
 		case keyConnect:
 			entry, err := r.svc.Connect(
@@ -398,7 +412,7 @@ func (
 		line(label("Notes:          ") + colorMuted + notes + ansiReset)
 
 		line()
-		line(helpText("C Connect | B Back | Q Quit"))
+		line(helpText("C Connect | D Delete | B Back | Q Quit"))
 		if status != "" {
 			line()
 			line(statusText(status))
@@ -419,6 +433,23 @@ func (
 			} else {
 				status = "Opened " + entry.AliasSnapshot + " in " + entry.TerminalApp
 			}
+		case keyDelete:
+			confirmed, err := r.confirmDelete(host)
+			if err != nil {
+				return actionNone, err.Error()
+			}
+			if !confirmed {
+				status = "Delete canceled."
+				continue
+			}
+			if err := r.svc.DeleteHost(
+				r.ctx,
+				host.Alias,
+			); err != nil {
+				status = err.Error()
+				continue
+			}
+			return actionNone, "Deleted " + host.Alias
 		case keyBack:
 			return actionNone, ""
 		case keyQuit:
@@ -639,6 +670,8 @@ func (r *runner) readKey() (
 		return keyDown, nil
 	case 'j', 'J', 'о', 'О':
 		return keyUp, nil
+	case 'd', 'D', 'в', 'В':
+		return keyDelete, nil
 	case 27:
 		next, err := r.reader.ReadByte()
 		if err != nil {
@@ -728,6 +761,28 @@ func (r *runner) resumeRaw() error {
 	r.reader = bufio.NewReader(os.Stdin)
 	write(ansiCursorBlinkOff + ansiCursorHide)
 	return nil
+}
+
+func (r *runner) confirmDelete(
+	host model.Host,
+) (
+	bool,
+	error,
+) {
+	clear()
+	renderLogo()
+	line()
+	line(colorRed + "Delete host" + ansiReset)
+	line()
+	line("Alias:  " + host.Alias)
+	line("Target: " + host.Username + "@" + host.Hostname + ":" + strconv.Itoa(host.Port))
+	line()
+	line(colorRed + "This cannot be undone." + ansiReset)
+	answer, err := r.readLine("Type alias to delete: ")
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(answer) == host.Alias, nil
 }
 
 func renderLogo() {
