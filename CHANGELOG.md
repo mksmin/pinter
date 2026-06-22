@@ -1,4 +1,10 @@
 # Changelog
+## v0.1.1 - 2026-06-23
+
+### Added
+
+- Added changelog.
+- Added install scripts for macOS, Linux, and Windows.
 
 ## v0.1.0 - 2026-06-23
 
