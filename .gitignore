@@ -1,6 +1,7 @@
 .cache/
 .idea/
-build/
+build/*
+!build/.gitkeep
 /pinter
 /main
 skiff/
