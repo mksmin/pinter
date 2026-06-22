@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - run: "go test ./..."
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+            asset: pinter-macos-amd64
+          - goos: darwin
+            goarch: arm64
+            asset: pinter-macos-arm64
+          - goos: linux
+            goarch: amd64
+            asset: pinter-linux-amd64
+          - goos: linux
+            goarch: arm64
+            asset: pinter-linux-arm64
+          - goos: windows
+            goarch: amd64
+            asset: pinter-windows-amd64.exe
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - run: mkdir -p dist
+
+      - run: go build -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/pinter
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: 'true'
+
+      - run: |
+          cd dist
+          sha256sum pinter-* > checksums.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+
+
