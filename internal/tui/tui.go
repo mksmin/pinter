@@ -45,6 +45,7 @@ const (
 	keyEnter
 	keyQuit
 	keyBack
+	keyConnect
 )
 
 const logo = ` ____  _       _            
@@ -52,7 +53,25 @@ const logo = ` ____  _       _
 | |_) | | '_ \| __/ _ \ '__|
 |  __/| | | | | ||  __/ |   
 |_|   |_|_| |_|\__\___|_|   
-Local SSH keeper`
+Local SSH keeper
+Made by mksmin: https://github.com/mksmin/pinter
+`
+
+const (
+	ansiReset          = "\033[0m"
+	ansiCursorBlinkOff = "\033[?12l"
+	ansiCursorBlinkOn  = "\033[?12h"
+	ansiCursorHide     = "\033[?25l"
+	ansiCursorShow     = "\033[?25h"
+
+	colorBlue    = "\033[38;5;75m"
+	colorCyan    = "\033[38;5;51m"
+	colorGreen   = "\033[38;5;83m"
+	colorMuted   = "\033[38;5;245m"
+	colorRed     = "\033[38;5;203m"
+	colorYellow  = "\033[38;5;221m"
+	colorMagenta = "\033[38;5;177m"
+)
 
 type runner struct {
 	ctx      context.Context
@@ -84,6 +103,8 @@ func Run(
 		),
 		oldState,
 	)
+	write(ansiCursorBlinkOff + ansiCursorHide)
+	defer write(ansiCursorBlinkOn + ansiCursorShow + ansiReset)
 
 	r := &runner{
 		ctx:      ctx,
@@ -198,30 +219,38 @@ func (r *runner) render(
 	status string,
 ) {
 	clear()
-	line(logo)
+	renderLogo()
 	line()
-	line("Update check disabled. Local-only MVP.")
+	line(colorMuted + "Update check disabled. Local-only MVP." + ansiReset)
 	line()
 
 	for i, item := range m.items {
 		cursor := "  "
+		titleColor := colorMuted
+		descColor := colorMuted
 		if i == selected {
-			cursor = "> "
+			cursor = colorCyan + "> " + ansiReset
+			titleColor = colorCyan
+			descColor = colorCyan
 		}
 		format(
-			"%s%d. %-10s %s\r\n",
+			"%s%s%d. %-10s%s %s%s%s\r\n",
 			cursor,
+			titleColor,
 			i+1,
 			item.title,
+			ansiReset,
+			descColor,
 			item.description,
+			ansiReset,
 		)
 	}
 
 	line()
-	line("Up/Down | Enter | B Back | Q Quit")
+	line(helpText("Up/Down | Enter | B Back | Q Quit"))
 	if status != "" {
 		line()
-		line(status)
+		line(statusText(status))
 	}
 }
 
@@ -241,18 +270,22 @@ func (r *runner) hosts() (
 	}
 
 	index := 0
-	status := "Enter connects selected host. B returns."
+	status := "Enter shows details. C connects selected host. B returns."
 	for {
 		clear()
-		line(logo)
+		renderLogo()
 		line()
-		line("Hosts")
+		line(colorYellow + "Hosts" + ansiReset)
 		line()
 
 		for i, host := range items {
 			cursor := "  "
+			aliasColor := colorMuted
+			targetColor := colorMuted
 			if i == index {
-				cursor = "> "
+				cursor = colorCyan + "> " + ansiReset
+				aliasColor = colorCyan
+				targetColor = colorCyan
 			}
 			last := "-"
 			if host.LastConnectedAt != nil {
@@ -261,20 +294,26 @@ func (r *runner) hosts() (
 				)
 			}
 			format(
-				"%s%-18s %s@%s:%d  last=%s\r\n",
+				"%s%s%-18s%s %s%s@%s:%d%s  %slast=%s%s\r\n",
 				cursor,
+				aliasColor,
 				host.Alias,
+				ansiReset,
+				targetColor,
 				host.Username,
 				host.Hostname,
 				host.Port,
+				ansiReset,
+				colorMuted,
 				last,
+				ansiReset,
 			)
 		}
 
 		line()
-		line("Up/Down | Enter Connect | B Back | Q Quit")
+		line(helpText("Up/Down | Enter Details | C Connect | B Back | Q Quit"))
 		line()
-		line(status)
+		line(statusText(status))
 
 		k, err := r.readKey()
 		if err != nil {
@@ -290,9 +329,90 @@ func (r *runner) hosts() (
 				index++
 			}
 		case keyEnter:
+			result, nextStatus := r.hostDetails(items[index])
+			if result == actionQuit {
+				return actionQuit, ""
+			}
+			status = nextStatus
+		case keyConnect:
 			entry, err := r.svc.Connect(
 				r.ctx,
 				items[index].Alias,
+			)
+			if err != nil {
+				status = err.Error()
+			} else {
+				status = "Opened " + entry.AliasSnapshot + " in " + entry.TerminalApp
+			}
+		case keyBack:
+			return actionNone, ""
+		case keyQuit:
+			return actionQuit, ""
+		}
+	}
+}
+
+func (
+	r *runner,
+) hostDetails(
+	host model.Host,
+) (
+	action,
+	string,
+) {
+	status := ""
+	for {
+		clear()
+		renderLogo()
+		line()
+		line(colorYellow + "Host details" + ansiReset)
+		line()
+
+		line(label("Alias:          ") + colorCyan + host.Alias + ansiReset)
+		line(label("Target:         ") + colorGreen + host.Username + "@" + host.Hostname + ":" + strconv.Itoa(host.Port) + ansiReset)
+
+		keyPath := "–"
+		if host.IdentityFile != "" {
+			keyPath = host.IdentityFile
+		}
+		line(label("IdentityFile:   ") + colorMuted + keyPath + ansiReset)
+
+		favorite := "no"
+		if host.Favorite {
+			favorite = "yes"
+		}
+		line(label("Favorite:       ") + colorMuted + favorite + ansiReset)
+
+		last := "-"
+		if host.LastConnectedAt != nil {
+			last = host.LastConnectedAt.Local().Format(
+				"2006-01-02 15:04",
+			)
+		}
+		line(label("Last connected: ") + colorMuted + last + ansiReset)
+
+		notes := "-"
+		if host.Notes != "" {
+			notes = host.Notes
+		}
+		line(label("Notes:          ") + colorMuted + notes + ansiReset)
+
+		line()
+		line(helpText("C Connect | B Back | Q Quit"))
+		if status != "" {
+			line()
+			line(statusText(status))
+		}
+
+		k, err := r.readKey()
+		if err != nil {
+			return actionNone, err.Error()
+		}
+		switch k {
+		case keyConnect:
+			entry, err := r.svc.Connect(
+				r.ctx,
+				host.Alias,
 			)
 			if err != nil {
 				status = err.Error()
@@ -334,9 +454,9 @@ func (r *runner) importSSHConfig() (
 	string,
 ) {
 	clear()
-	line("Import SSH config")
+	line(colorYellow + "Import SSH config" + ansiReset)
 	line()
-	line("Path empty = ~/.ssh/config")
+	line(colorMuted + "Path empty = ~/.ssh/config" + ansiReset)
 	path, err := r.readLine("Path: ")
 	if err != nil {
 		return actionNone, err.Error()
@@ -369,27 +489,35 @@ func (r *runner) history() (
 	}
 
 	clear()
-	line(logo)
+	renderLogo()
 	line()
-	line("History")
+	line(colorYellow + "History" + ansiReset)
 	line()
 	if len(items) == 0 {
-		line("No connection history yet.")
+		line(colorMuted + "No connection history yet." + ansiReset)
 	} else {
 		for _, item := range items {
 			format(
-				"%s  %-18s  %s  %s\r\n",
+				"%s%s%s  %s%-18s%s  %s%s%s  %s%s%s\r\n",
+				colorMuted,
 				item.StartedAt.Local().Format(
 					time.RFC3339,
 				),
+				ansiReset,
+				colorCyan,
 				item.AliasSnapshot,
+				ansiReset,
+				colorGreen,
 				item.TerminalApp,
+				ansiReset,
+				colorMuted,
 				item.Command,
+				ansiReset,
 			)
 		}
 	}
 	line()
-	line("Press any key.")
+	line(helpText("Press any key."))
 	_, _ = r.readKey()
 	return actionNone, ""
 }
@@ -414,15 +542,15 @@ func (r *runner) status() (
 	}
 
 	clear()
-	line(logo)
+	renderLogo()
 	line()
-	line("Status")
+	line(colorYellow + "Status" + ansiReset)
 	line()
-	line("DB:      " + r.dbPath)
-	line("Hosts:   " + strconv.Itoa(len(hosts)))
-	line("History: " + strconv.Itoa(len(history)))
+	line(label("DB:      ") + colorMuted + r.dbPath + ansiReset)
+	line(label("Hosts:   ") + colorCyan + strconv.Itoa(len(hosts)) + ansiReset)
+	line(label("History: ") + colorCyan + strconv.Itoa(len(history)) + ansiReset)
 	line()
-	line("Press any key.")
+	line(helpText("Press any key."))
 	_, _ = r.readKey()
 	return actionNone, ""
 }
@@ -432,9 +560,9 @@ func (r *runner) promptHost() (
 	error,
 ) {
 	clear()
-	line("Add host")
+	line(colorYellow + "Add host" + ansiReset)
 	line()
-	line("Alias empty cancels.")
+	line(colorMuted + "Alias empty cancels." + ansiReset)
 
 	alias, err := r.readLine("Alias: ")
 	if err != nil {
@@ -509,6 +637,8 @@ func (r *runner) readKey() (
 		return keyUp, nil
 	case 'j', 'J':
 		return keyDown, nil
+	case 'c', 'C':
+		return keyConnect, nil
 	case 27:
 		next, err := r.reader.ReadByte()
 		if err != nil {
@@ -569,6 +699,7 @@ func (r *runner) suspendRaw() error {
 	) {
 		return nil
 	}
+	write(ansiCursorBlinkOn + ansiCursorShow + ansiReset)
 	return term.Restore(
 		int(
 			os.Stdin.Fd(),
@@ -595,7 +726,60 @@ func (r *runner) resumeRaw() error {
 	}
 	r.oldState = state
 	r.reader = bufio.NewReader(os.Stdin)
+	write(ansiCursorBlinkOff + ansiCursorHide)
 	return nil
+}
+
+func renderLogo() {
+	lines := strings.Split(
+		strings.TrimRight(
+			logo,
+			"\n",
+		),
+		"\n",
+	)
+	for i, text := range lines {
+		if i < 6 {
+			line(colorGreen + text + ansiReset)
+			continue
+		}
+		prefix, link, ok := strings.Cut(
+			text,
+			": ",
+		)
+		if !ok {
+			line(colorMuted + text + ansiReset)
+			continue
+		}
+		line(colorMuted + prefix + ": " + colorBlue + link + ansiReset)
+	}
+}
+
+func label(
+	value string,
+) string {
+	return colorMuted + value + ansiReset
+}
+
+func helpText(
+	value string,
+) string {
+	return colorMuted + value + ansiReset
+}
+
+func statusText(
+	value string,
+) string {
+	if strings.Contains(
+		strings.ToLower(value),
+		"error",
+	) || strings.Contains(
+		strings.ToLower(value),
+		"invalid",
+	) {
+		return colorRed + value + ansiReset
+	}
+	return colorGreen + value + ansiReset
 }
 
 func clear() {
