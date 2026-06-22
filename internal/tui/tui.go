@@ -176,17 +176,17 @@ func (r *runner) render(
 	status string,
 ) {
 	clear()
-	fmt.Println(logo)
-	fmt.Println()
-	fmt.Println("Update check disabled. Local-only MVP.")
-	fmt.Println()
+	line(logo)
+	line()
+	line("Update check disabled. Local-only MVP.")
+	line()
 
 	for i, item := range m.items {
 		cursor := "  "
 		if i == selected {
 			cursor = "> "
 		}
-		fmt.Printf(
+		format(
 			"%s%d. %-10s %s\r\n",
 			cursor,
 			i+1,
@@ -195,11 +195,11 @@ func (r *runner) render(
 		)
 	}
 
-	fmt.Println()
-	fmt.Println("Up/Down | Enter | B Back | Q Quit")
+	line()
+	line("Up/Down | Enter | B Back | Q Quit")
 	if status != "" {
-		fmt.Println()
-		fmt.Println(status)
+		line()
+		line(status)
 	}
 }
 
@@ -219,10 +219,10 @@ func (r *runner) hosts() (action, string) {
 	status := "Enter connects selected host. B returns."
 	for {
 		clear()
-		fmt.Println(logo)
-		fmt.Println()
-		fmt.Println("Hosts")
-		fmt.Println()
+		line(logo)
+		line()
+		line("Hosts")
+		line()
 
 		for i, host := range items {
 			cursor := "  "
@@ -233,7 +233,7 @@ func (r *runner) hosts() (action, string) {
 			if host.LastConnectedAt != nil {
 				last = host.LastConnectedAt.Local().Format("2006-01-02 15:04")
 			}
-			fmt.Printf(
+			format(
 				"%s%-18s %s@%s:%d  last=%s\r\n",
 				cursor,
 				host.Alias,
@@ -244,10 +244,10 @@ func (r *runner) hosts() (action, string) {
 			)
 		}
 
-		fmt.Println()
-		fmt.Println("Up/Down | Enter Connect | B Back | Q Quit")
-		fmt.Println()
-		fmt.Println(status)
+		line()
+		line("Up/Down | Enter Connect | B Back | Q Quit")
+		line()
+		line(status)
 
 		k, err := r.readKey()
 		if err != nil {
@@ -301,9 +301,9 @@ func (r *runner) addHost() (action, string) {
 
 func (r *runner) importSSHConfig() (action, string) {
 	clear()
-	fmt.Println("Import SSH config")
-	fmt.Println()
-	fmt.Println("Path empty = ~/.ssh/config")
+	line("Import SSH config")
+	line()
+	line("Path empty = ~/.ssh/config")
 	path, err := r.readLine("Path: ")
 	if err != nil {
 		return actionNone, err.Error()
@@ -333,15 +333,15 @@ func (r *runner) history() (action, string) {
 	}
 
 	clear()
-	fmt.Println(logo)
-	fmt.Println()
-	fmt.Println("History")
-	fmt.Println()
+	line(logo)
+	line()
+	line("History")
+	line()
 	if len(items) == 0 {
-		fmt.Println("No connection history yet.")
+		line("No connection history yet.")
 	} else {
 		for _, item := range items {
-			fmt.Printf(
+			format(
 				"%s  %-18s  %s  %s\r\n",
 				item.StartedAt.Local().Format(time.RFC3339),
 				item.AliasSnapshot,
@@ -350,8 +350,8 @@ func (r *runner) history() (action, string) {
 			)
 		}
 	}
-	fmt.Println()
-	fmt.Println("Press any key.")
+	line()
+	line("Press any key.")
 	_, _ = r.readKey()
 	return actionNone, ""
 }
@@ -373,24 +373,24 @@ func (r *runner) status() (action, string) {
 	}
 
 	clear()
-	fmt.Println(logo)
-	fmt.Println()
-	fmt.Println("Status")
-	fmt.Println()
-	fmt.Println("DB:      " + r.dbPath)
-	fmt.Println("Hosts:   " + strconv.Itoa(len(hosts)))
-	fmt.Println("History: " + strconv.Itoa(len(history)))
-	fmt.Println()
-	fmt.Println("Press any key.")
+	line(logo)
+	line()
+	line("Status")
+	line()
+	line("DB:      " + r.dbPath)
+	line("Hosts:   " + strconv.Itoa(len(hosts)))
+	line("History: " + strconv.Itoa(len(history)))
+	line()
+	line("Press any key.")
 	_, _ = r.readKey()
 	return actionNone, ""
 }
 
 func (r *runner) promptHost() (model.HostInput, error) {
 	clear()
-	fmt.Println("Add host")
-	fmt.Println()
-	fmt.Println("Alias empty cancels.")
+	line("Add host")
+	line()
+	line("Alias empty cancels.")
 
 	alias, err := r.readLine("Alias: ")
 	if err != nil {
@@ -529,5 +529,36 @@ func (r *runner) resumeRaw() error {
 }
 
 func clear() {
-	fmt.Print("\033[H\033[2J")
+	write("\033[H\033[2J\033[3J")
+}
+
+func line(
+	values ...any,
+) {
+	write(fmt.Sprintln(values...))
+}
+
+func format(
+	template string,
+	values ...any,
+) {
+	write(fmt.Sprintf(
+		template,
+		values...,
+	))
+}
+
+func write(
+	value string,
+) {
+	value = strings.ReplaceAll(
+		value,
+		"\r\n",
+		"\n",
+	)
+	fmt.Print(strings.ReplaceAll(
+		value,
+		"\n",
+		"\r\n",
+	))
 }
