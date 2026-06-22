@@ -46,6 +46,34 @@ Next work lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 - Go 1.26+
 - macOS Terminal.app for `connect`
 
+## Install
+
+Install latest release on macOS or Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.sh | sh
+```
+
+Install a specific version:
+
+```bash
+PINTER_VERSION=v0.1.1 sh -c "$(curl -fsSL https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.sh)"
+```
+
+Install to a custom directory:
+
+```bash
+PINTER_INSTALL_DIR="$HOME/bin" sh -c "$(curl -fsSL https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.sh)"
+```
+
+Windows PowerShell:
+
+```powershell
+iwr https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.ps1 -UseB | iex
+```
+
+If `pinter` is not found after install, add the install directory to `PATH`.
+
 ## Data
 
 Default DB path:
@@ -158,6 +186,16 @@ Run built binary command:
 ./build/pinter list
 ```
 
+## Release Builds
+
+Tagged releases publish binaries for:
+
+- macOS amd64/arm64
+- Linux amd64/arm64
+- Windows amd64
+
+Release assets are attached by GitHub Actions with `checksums.txt`.
+
 ## Verify
 
 Run tests:
@@ -222,3 +260,4 @@ go run ./cmd/pinter connect smoke
 
 - [Project structure](docs/PROJECT_STRUCTURE.md)
 - [Development roadmap](docs/ROADMAP.md)
+- [Changelog](CHANGELOG.md)
