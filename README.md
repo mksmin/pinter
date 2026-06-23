@@ -6,25 +6,20 @@ No GUI frameworks. No Wails. No frontend.
 
 ## Screenshots
 
-Main menu:
-
-![Pinter TUI main menu](docs/assets/tui-main.svg)
-
-Add host:
-
-![Pinter TUI add host](docs/assets/tui-add.svg)
-
-Import SSH config:
-
-![Pinter TUI import SSH config](docs/assets/tui-import.svg)
-
-History:
-
-![Pinter TUI history](docs/assets/tui-history.svg)
-
-Status:
-
-![Pinter TUI status](docs/assets/tui-status.svg)
+<table>
+  <tr>
+    <td><strong>Main menu</strong><br><img src="docs/assets/tui-main.svg" alt="Pinter TUI main menu"></td>
+    <td><strong>Add host</strong><br><img src="docs/assets/tui-add.svg" alt="Pinter TUI add host"></td>
+  </tr>
+  <tr>
+    <td><strong>Import SSH config</strong><br><img src="docs/assets/tui-import.svg" alt="Pinter TUI import SSH config"></td>
+    <td><strong>Status</strong><br><img src="docs/assets/tui-status.svg" alt="Pinter TUI status"></td>
+  </tr>
+  <tr>
+    <td><strong>History</strong><br><img src="docs/assets/tui-history.svg" alt="Pinter TUI history"></td>
+    <td></td>
+  </tr>
+</table>
 
 ## Status
 
