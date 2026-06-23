@@ -1,6 +1,6 @@
 # Pinter
 
-Local SSH keeper MVP. CLI + colorful TUI. Stores hosts in SQLite, imports `~/.ssh/config` on explicit command, opens SSH in macOS Terminal via system `ssh`.
+Local SSH keeper MVP. CLI + colorful TUI. Stores hosts in SQLite, imports `~/.ssh/config` on explicit command, opens SSH in an external terminal via system `ssh`.
 
 No GUI frameworks. No Wails. No frontend.
 
@@ -33,6 +33,7 @@ Done:
 - Explicit SSH config import.
 - SQLite local DB.
 - macOS Terminal.app launch.
+- Windows terminal launch with `wt`, PowerShell, PowerShell 7, and cmd fallback.
 
 Next work lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -97,6 +98,8 @@ If a key is already loaded in `ssh-agent`, verify both shells see it:
 ssh-add -l
 cmd /C ssh-add -l
 ```
+
+If `wt.exe` is not available, `PINTER_TERMINAL=wt` falls back to PowerShell 7, Windows PowerShell, then cmd.
 
 ## Data
 
@@ -184,7 +187,7 @@ Connect:
 go run ./cmd/pinter connect local
 ```
 
-This opens Terminal.app with system `ssh`.
+This opens an external terminal with system `ssh`.
 
 History:
 
@@ -196,6 +199,12 @@ go run ./cmd/pinter history
 
 ```bash
 make build
+```
+
+Or with `just`:
+
+```bash
+just build
 ```
 
 Open TUI from built binary:
@@ -225,7 +234,7 @@ Release assets are attached by GitHub Actions with `checksums.txt`.
 Run tests:
 
 ```bash
-go test ./...
+just test
 ```
 
 Build all packages:

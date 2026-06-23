@@ -11,6 +11,7 @@ pinter/
   docs/
     PROJECT_STRUCTURE.md    This guide
   internal/                 Go application code
+  justfile                  Local build/test recipes
   skiff/                    Local reference project, ignored by git
   go.mod
   README.md
@@ -36,7 +37,7 @@ cmd/pinter connect <alias>
   -> internal/app.Service.Connect
   -> internal/hosts.Repository.GetByAlias
   -> internal/terminal.Launcher.Open
-  -> macOS Terminal.app
+  -> external terminal launcher
   -> system ssh
   -> internal/hosts.Repository.MarkConnected
   -> internal/hosts.Repository.AddHistory
@@ -94,6 +95,7 @@ Env vars:
 ```text
 PINTER_DB_PATH     Exact SQLite file path
 PINTER_DATA_DIR    Directory containing pinter.sqlite
+PINTER_TERMINAL    Windows terminal: auto, wt, pwsh, powershell, cmd
 ```
 
 Default macOS DB:
@@ -165,6 +167,16 @@ Supported directives:
 - `User`
 - `IdentityFile`
 
+`IdentityFile` expands:
+
+- `~/`
+- `~\`
+- `$HOME`
+- `%USERPROFILE%`
+- other known `%VAR%` environment values
+
+Unknown `%...%` values remain unchanged so OpenSSH tokens are not silently lost.
+
 Skipped:
 
 - `Host *`
@@ -187,12 +199,34 @@ macOS MVP:
 osascript -> Terminal.app -> ssh command
 ```
 
-Future Windows support belongs here. If logic grows, split:
+Windows launchers:
+
+```text
+PINTER_TERMINAL=auto -> wt -> pwsh -> powershell -> cmd
+PINTER_TERMINAL=wt   -> Windows Terminal, then shell fallback
+PINTER_TERMINAL=pwsh -> PowerShell 7
+PINTER_TERMINAL=powershell -> Windows PowerShell
+PINTER_TERMINAL=cmd  -> cmd.exe
+```
+
+SSH command arguments are built first, then rendered for the selected shell:
+
+- POSIX shell quoting for macOS/Linux.
+- cmd quoting for `cmd.exe`.
+- PowerShell quoting for PowerShell launchers.
+
+If launcher logic grows further, split:
 
 ```text
 launcher_darwin.go
 launcher_windows.go
 launcher_unix.go
+```
+
+Tests:
+
+```text
+internal/terminal/terminal_test.go
 ```
 
 ### `internal/tui`
@@ -306,6 +340,12 @@ Windows terminal:
 
 ```text
 internal/terminal
+```
+
+Build/test recipes:
+
+```text
+justfile
 ```
 
 Encrypted credentials later:

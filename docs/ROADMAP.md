@@ -28,7 +28,18 @@ Status: done.
   - `hosts`
   - `connection_history`
 - macOS Terminal.app launcher.
+- Windows launcher:
+  - Windows Terminal
+  - PowerShell 7
+  - Windows PowerShell
+  - cmd fallback
 - SSH config parser for basic directives.
+- SSH config `IdentityFile` expansion:
+  - `~/`
+  - `~\`
+  - `$HOME`
+  - `%USERPROFILE%`
+  - Unicode paths
 - Docs:
   - README
   - project structure
@@ -115,15 +126,17 @@ Goal: reliable import from real-world `~/.ssh/config`.
 
 Tasks:
 
-- Parse `Include`.
-- Parse multiple `Host` aliases.
-- Expand `~` and env vars in `IdentityFile`.
-- Preserve unsupported directives in notes.
-- Preview import in TUI before apply.
-- Conflict handling:
-  - skip
-  - update
-  - rename
+- Done:
+  - Expand `~`, env vars, and Windows `%VAR%` paths in `IdentityFile`.
+- Remaining:
+  - Parse `Include`.
+  - Parse multiple `Host` aliases.
+  - Preserve unsupported directives in notes.
+  - Preview import in TUI before apply.
+  - Conflict handling:
+    - skip
+    - update
+    - rename
 
 Acceptance:
 
@@ -143,9 +156,15 @@ Tasks:
 - Copy SSH command action.
 - Dry-run connect output.
 - Record failed launcher errors clearly.
-- Windows launcher:
-  - Windows Terminal
-  - PowerShell fallback
+- Done:
+  - Windows launcher:
+    - Windows Terminal
+    - PowerShell 7
+    - Windows PowerShell
+    - cmd fallback
+    - `PINTER_TERMINAL=auto|wt|pwsh|powershell|cmd`
+- Remaining:
+  - Windows custom command template
 - Linux launcher:
   - `$TERMINAL`
   - common terminal fallback list
@@ -153,7 +172,8 @@ Tasks:
 Acceptance:
 
 - macOS works by default.
-- Windows/Linux have MVP launch path.
+- Windows has MVP launch path.
+- Linux has MVP launch path.
 
 ## Phase 6: Security And Secrets
 
@@ -211,6 +231,7 @@ Tasks:
     - macOS/Linux shell installer
     - Windows PowerShell installer
   - Better README screenshots.
+  - Document `just` recipes.
 - Remaining:
   - App version command.
   - Update check disabled by default.
