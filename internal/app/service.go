@@ -74,6 +74,39 @@ func (s *Service) DeleteHost(
 	)
 }
 
+func (s *Service) EditHost(
+	ctx context.Context,
+	alias string,
+	input model.HostInput,
+) (
+	model.Host,
+	error,
+) {
+	host, err := s.hosts.GetByAlias(
+		ctx,
+		alias,
+	)
+	if err != nil {
+		return model.Host{}, fmt.Errorf(
+			"find host %q: %w",
+			alias,
+			err,
+		)
+	}
+	if err := s.hosts.Update(
+		ctx,
+		host.ID,
+		input,
+	); err != nil {
+		return model.Host{}, err
+	}
+
+	return s.hosts.GetByID(
+		ctx,
+		host.ID,
+	)
+}
+
 func (s *Service) ListHosts(
 	ctx context.Context,
 	query string,

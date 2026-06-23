@@ -47,6 +47,7 @@ const (
 	keyBack
 	keyConnect
 	keyDelete
+	keyEdit
 )
 
 const logo = ` ____  _       _            
@@ -412,7 +413,7 @@ func (
 		line(label("Notes:          ") + colorMuted + notes + ansiReset)
 
 		line()
-		line(helpText("C Connect | D Delete | B Back | Q Quit"))
+		line(helpText("C Connect | E Edit | D Delete | B Back | Q Quit"))
 		if status != "" {
 			line()
 			line(statusText(status))
@@ -433,6 +434,13 @@ func (
 			} else {
 				status = "Opened " + entry.AliasSnapshot + " in " + entry.TerminalApp
 			}
+		case keyEdit:
+			updated, err := r.editHost(host)
+			if err != nil {
+				return actionNone, err.Error()
+			}
+			host = updated
+			status = "Updated " + host.Alias
 		case keyDelete:
 			confirmed, err := r.confirmDelete(host)
 			if err != nil {
@@ -672,6 +680,8 @@ func (r *runner) readKey() (
 		return keyUp, nil
 	case 'd', 'D', 'в', 'В':
 		return keyDelete, nil
+	case 'e', 'E', 'у', 'У':
+		return keyEdit, nil
 	case 27:
 		next, err := r.reader.ReadByte()
 		if err != nil {
@@ -761,6 +771,97 @@ func (r *runner) resumeRaw() error {
 	r.reader = bufio.NewReader(os.Stdin)
 	write(ansiCursorBlinkOff + ansiCursorHide)
 	return nil
+}
+
+func (r *runner) editHost(
+	host model.Host,
+) (
+	model.Host,
+	error,
+) {
+	clear()
+	renderLogo()
+	line()
+	line(colorYellow + "Edit host" + ansiReset)
+	line()
+	line(colorMuted + "Empty value keeps current value." + ansiReset)
+	line()
+
+	alias, err := r.readLine("Alias [" + host.Alias + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
+		alias = host.Alias
+	}
+
+	hostname, err := r.readLine("Hostname [" + host.Hostname + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	hostname = strings.TrimSpace(hostname)
+	if hostname == "" {
+		hostname = host.Hostname
+	}
+
+	username, err := r.readLine("Username [" + host.Username + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	username = strings.TrimSpace(username)
+	if username == "" {
+		username = host.Username
+	}
+
+	portText, err := r.readLine("Port [" + strconv.Itoa(host.Port) + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	port := host.Port
+	portText = strings.TrimSpace(portText)
+	if portText != "" {
+		parsed, err := strconv.Atoi(portText)
+		if err != nil {
+			return model.Host{}, fmt.Errorf(
+				"Invalid port: %w",
+				err,
+			)
+		}
+		port = parsed
+	}
+
+	key, err := r.readLine("Identity file path [" + host.IdentityFile + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	key = strings.TrimSpace(key)
+	if key == "" {
+		key = host.IdentityFile
+	}
+
+	notes, err := r.readLine("Notes [" + host.Notes + "]: ")
+	if err != nil {
+		return model.Host{}, err
+	}
+	notes = strings.TrimSpace(notes)
+	if notes == "" {
+		notes = host.Notes
+	}
+
+	return r.svc.EditHost(
+		r.ctx,
+		host.Alias,
+		model.HostInput{
+			Alias:        alias,
+			Hostname:     hostname,
+			Port:         port,
+			Username:     username,
+			IdentityFile: key,
+			Notes:        notes,
+			Favorite:     host.Favorite,
+		},
+	)
 }
 
 func (r *runner) confirmDelete(
