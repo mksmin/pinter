@@ -10,6 +10,8 @@
 - Added `IdentityFile` expansion for Windows paths, env vars, and Unicode paths.
 - Added `justfile` recipes for build, run, test, and clean.
 - Added terminal and SSH config tests for Windows paths.
+- Added host editing from the TUI details screen.
+- Added host filtering in the TUI by alias, hostname, username, and notes.
 
 ### Fixed
 
