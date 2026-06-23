@@ -48,6 +48,7 @@ const (
 	keyConnect
 	keyDelete
 	keyEdit
+	keySearch
 )
 
 const logo = ` ____  _       _            
@@ -260,9 +261,10 @@ func (r *runner) hosts() (
 	action,
 	string,
 ) {
+	query := ""
 	items, err := r.svc.ListHosts(
 		r.ctx,
-		"",
+		query,
 	)
 	if err != nil {
 		return actionNone, err.Error()
@@ -313,7 +315,7 @@ func (r *runner) hosts() (
 		}
 
 		line()
-		line(helpText("Up/Down | Enter Details | C Connect | B Back | Q Quit"))
+		line(helpText("Up/Down | Enter Details | F Filter | C Connect | B Back | Q Quit"))
 		line()
 		line(statusText(status))
 
@@ -322,6 +324,31 @@ func (r *runner) hosts() (
 			return actionNone, err.Error()
 		}
 		switch k {
+		case keySearch:
+			value, err := r.readLine("Filter: ")
+			if err != nil {
+				return actionNone, err.Error()
+			}
+
+			query = strings.TrimSpace(value)
+			items, err = r.svc.ListHosts(
+				r.ctx,
+				query,
+			)
+			if err != nil {
+				return actionNone, err.Error()
+			}
+
+			index = 0
+			if len(items) == 0 {
+				status = "No hosts found. Press F to change filter."
+				continue
+			}
+			if query == "" {
+				status = "Filter cleared."
+			} else {
+				status = "Filter: " + query
+			}
 		case keyUp:
 			if index > 0 {
 				index--
@@ -331,13 +358,16 @@ func (r *runner) hosts() (
 				index++
 			}
 		case keyEnter:
+			if len(items) == 0 {
+				continue
+			}
 			result, nextStatus := r.hostDetails(items[index])
 			if result == actionQuit {
 				return actionQuit, ""
 			}
 			items, err = r.svc.ListHosts(
 				r.ctx,
-				"",
+				query,
 			)
 			if err != nil {
 				return actionNone, err.Error()
@@ -350,6 +380,9 @@ func (r *runner) hosts() (
 			}
 			status = nextStatus
 		case keyConnect:
+			if len(items) == 0 {
+				continue
+			}
 			entry, err := r.svc.Connect(
 				r.ctx,
 				items[index].Alias,
@@ -682,6 +715,8 @@ func (r *runner) readKey() (
 		return keyDelete, nil
 	case 'e', 'E', 'у', 'У':
 		return keyEdit, nil
+	case 'f', 'F', 'а', 'А':
+		return keySearch, nil
 	case 27:
 		next, err := r.reader.ReadByte()
 		if err != nil {
