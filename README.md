@@ -67,7 +67,7 @@ Windows PowerShell:
 iwr https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.ps1 -UseB | iex
 ```
 
-If `pinter` is not found after install, add the install directory to `PATH`.
+On Windows, the installer adds the install directory to user `PATH` and to the current PowerShell session.
 
 ## Data
 
