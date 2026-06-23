@@ -369,7 +369,8 @@ Usage:
 
 Environment:
   PINTER_DB_PATH    Override SQLite database path
-  PINTER_DATA_DIR   Override data directory`,
+  PINTER_DATA_DIR   Override data directory
+  PINTER_TERMINAL   Windows terminal: auto, wt, pwsh, powershell, cmd`,
 	)
 }
 

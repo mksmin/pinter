@@ -218,10 +218,11 @@ func expandIdentityFile(
 	value string,
 ) string {
 	value = strings.TrimSpace(value)
-	if strings.HasPrefix(
-		value,
-		"~/",
-	) {
+	value = expandPercentEnv(value)
+	value = os.ExpandEnv(value)
+
+	if strings.HasPrefix(value, "~/") ||
+		strings.HasPrefix(value, `~\`) {
 		home, err := os.UserHomeDir()
 		if err == nil {
 			return filepath.Join(
@@ -231,4 +232,41 @@ func expandIdentityFile(
 		}
 	}
 	return value
+}
+
+func expandPercentEnv(
+	value string,
+) string {
+	var out strings.Builder
+	for i := 0; i < len(value); {
+		if value[i] != '%' {
+			out.WriteByte(value[i])
+			i++
+			continue
+		}
+
+		end := strings.IndexByte(
+			value[i+1:],
+			'%',
+		)
+		if end < 0 {
+			out.WriteByte(value[i])
+			i++
+			continue
+		}
+
+		name := value[i+1 : i+1+end]
+		replacement, ok := os.LookupEnv(name)
+		if !ok {
+			out.WriteString(
+				value[i : i+end+2],
+			)
+			i += end + 2
+			continue
+		}
+
+		out.WriteString(replacement)
+		i += end + 2
+	}
+	return out.String()
 }

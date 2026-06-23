@@ -1,6 +1,7 @@
 package sshconfig
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -72,6 +73,96 @@ Port=2200
 		t.Fatalf(
 			"unexpected host: %#v",
 			hosts[0],
+		)
+	}
+}
+
+func TestExpandIdentityFileWindowsHomeSlash(
+	t *testing.T,
+) {
+	t.Setenv(
+		"HOME",
+		`C:\Users\moype`,
+	)
+	t.Setenv(
+		"USERPROFILE",
+		`C:\Users\moype`,
+	)
+
+	got := expandIdentityFile(
+		`~\Рабочий стол\.ssh\ключ`,
+	)
+	want := filepath.Join(
+		`C:\Users\moype`,
+		`Рабочий стол\.ssh\ключ`,
+	)
+
+	if got != want {
+		t.Fatalf(
+			"got %q, want %q",
+			got,
+			want,
+		)
+	}
+}
+
+func TestExpandIdentityFilePercentEnv(
+	t *testing.T,
+) {
+	t.Setenv(
+		"USERPROFILE",
+		`C:\Users\moype`,
+	)
+
+	got := expandIdentityFile(
+		`%USERPROFILE%\Рабочий стол\.ssh\ключ`,
+	)
+	want := `C:\Users\moype\Рабочий стол\.ssh\ключ`
+
+	if got != want {
+		t.Fatalf(
+			"got %q, want %q",
+			got,
+			want,
+		)
+	}
+}
+
+func TestExpandIdentityFileDollarEnv(
+	t *testing.T,
+) {
+	t.Setenv(
+		"HOME",
+		`C:\Users\moype`,
+	)
+
+	got := expandIdentityFile(
+		`$HOME\Рабочий стол\.ssh\ключ`,
+	)
+	want := `C:\Users\moype\Рабочий стол\.ssh\ключ`
+
+	if got != want {
+		t.Fatalf(
+			"got %q, want %q",
+			got,
+			want,
+		)
+	}
+}
+
+func TestExpandIdentityFileLeavesUnknownPercentToken(
+	t *testing.T,
+) {
+	got := expandIdentityFile(
+		`%h\.ssh\ключ`,
+	)
+	want := `%h\.ssh\ключ`
+
+	if got != want {
+		t.Fatalf(
+			"got %q, want %q",
+			got,
+			want,
 		)
 	}
 }

@@ -40,6 +40,7 @@ Next work lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 - Go 1.26+
 - macOS Terminal.app for `connect`
+- Windows OpenSSH client for `connect` on Windows
 
 ## Install
 
@@ -68,6 +69,34 @@ iwr https://raw.githubusercontent.com/mksmin/pinter/master/scripts/install.ps1 -
 ```
 
 On Windows, the installer adds the install directory to user `PATH` and to the current PowerShell session.
+
+## Windows
+
+Pinter uses system `ssh`. On Windows, connection launch can use Windows Terminal, PowerShell, PowerShell 7, or cmd:
+
+```powershell
+$env:PINTER_TERMINAL = "auto"       # wt, pwsh, powershell, then cmd
+$env:PINTER_TERMINAL = "pwsh"       # PowerShell 7
+$env:PINTER_TERMINAL = "powershell" # Windows PowerShell
+$env:PINTER_TERMINAL = "cmd"        # cmd.exe
+$env:PINTER_TERMINAL = "wt"         # Windows Terminal
+```
+
+SSH config `IdentityFile` supports Windows paths and Unicode paths:
+
+```sshconfig
+Host backend
+  HostName 155.212.161.204
+  User unclededa
+  IdentityFile %USERPROFILE%\Рабочий стол\.ssh\ключ
+```
+
+If a key is already loaded in `ssh-agent`, verify both shells see it:
+
+```powershell
+ssh-add -l
+cmd /C ssh-add -l
+```
 
 ## Data
 
