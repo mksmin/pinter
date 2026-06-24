@@ -53,7 +53,7 @@ jobs:
 
       - run: mkdir -p dist
 
-      - run: go build -trimpath -ldflags="-s -w" -o "dist/${{ matrix.asset }}" ./cmd/pinter
+      - run: go build -trimpath -ldflags="-s -w -X pinter/internal/version.Value=${{ github.ref_name }}" -o "dist/${{ matrix.asset }}" ./cmd/pinter
         env:
           CGO_ENABLED: "0"
           GOOS: ${{ matrix.goos }}

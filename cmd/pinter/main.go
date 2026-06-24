@@ -15,6 +15,7 @@ import (
 	"pinter/internal/config"
 	"pinter/internal/model"
 	"pinter/internal/tui"
+	"pinter/internal/version"
 )
 
 func main() {
@@ -31,6 +32,14 @@ func main() {
 func run(
 	args []string,
 ) error {
+	if len(args) > 0 {
+		switch args[0] {
+		case "version", "--version":
+			fmt.Println(version.Current())
+			return nil
+		}
+	}
+
 	if len(args) == 0 {
 		dbPath, err := config.DBPath()
 		if err != nil {
@@ -366,6 +375,7 @@ Usage:
   pinter connect <alias>
   pinter history [--limit 20]
   pinter import-ssh-config [--path ~/.ssh/config]
+  pinter version
 
 Environment:
   PINTER_DB_PATH    Override SQLite database path
