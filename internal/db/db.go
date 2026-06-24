@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -46,44 +47,138 @@ func Open(
 func migrate(
 	conn *sql.DB,
 ) error {
-	statements := []string{
+	if _, err := conn.Exec(
 		`PRAGMA foreign_keys = ON`,
-		`PRAGMA journal_mode = WAL`,
-		`CREATE TABLE IF NOT EXISTS hosts (
-			id TEXT PRIMARY KEY,
-			alias TEXT NOT NULL UNIQUE,
-			hostname TEXT NOT NULL,
-			port INTEGER NOT NULL DEFAULT 22,
-			username TEXT NOT NULL,
-			identity_file TEXT NOT NULL DEFAULT '',
-			notes TEXT NOT NULL DEFAULT '',
-			favorite INTEGER NOT NULL DEFAULT 0 CHECK (favorite IN (0, 1)),
-			last_connected_at TEXT,
-			created_at TEXT NOT NULL,
-			updated_at TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_hosts_alias ON hosts(alias)`,
-		`CREATE INDEX IF NOT EXISTS idx_hosts_last_connected ON hosts(last_connected_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS connection_history (
-			id TEXT PRIMARY KEY,
-			host_id TEXT NOT NULL REFERENCES hosts(id) ON DELETE CASCADE,
-			alias_snapshot TEXT NOT NULL,
-			command TEXT NOT NULL,
-			started_at TEXT NOT NULL,
-			exit_status INTEGER,
-			terminal_app TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_connection_history_host ON connection_history(host_id, started_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_connection_history_started ON connection_history(started_at DESC)`,
+	); err != nil {
+		return fmt.Errorf(
+			"enable foreign keys: %w",
+			err,
+		)
 	}
 
-	for _, stmt := range statements {
-		if _, err := conn.Exec(stmt); err != nil {
+	if _, err := conn.Exec(
+		`PRAGMA journal_mode = WAL`,
+	); err != nil {
+		return fmt.Errorf(
+			"enable WAL mode: %w",
+			err,
+		)
+	}
+
+	if _, err := conn.Exec(
+		`CREATE TABLE IF NOT EXISTS schema_migrations (
+			version INTEGER PRIMARY KEY,
+			applied_at TEXT NOT NULL
+		)`,
+	); err != nil {
+		return fmt.Errorf(
+			"create schema migrations: %w",
+			err,
+		)
+	}
+
+	currentVersion, err := schemaVersion(conn)
+	if err != nil {
+		return err
+	}
+
+	latestVersion := latestSchemaVersion()
+	if currentVersion > latestVersion {
+		return fmt.Errorf(
+			"database schema version %d is newer than supported version %d",
+			currentVersion,
+			latestVersion,
+		)
+	}
+	for _, item := range migrations {
+		if item.version <= currentVersion {
+			continue
+		}
+		if err := applyMigration(
+			conn,
+			item,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func schemaVersion(
+	conn *sql.DB,
+) (
+	int,
+	error,
+) {
+	var version int
+	if err := conn.QueryRow(
+		`SELECT COALESCE(MAX(version), 0) FROM schema_migrations`,
+	).Scan(&version); err != nil {
+		return 0, fmt.Errorf(
+			"read schema version: %w",
+			err,
+		)
+	}
+	return version, nil
+}
+
+func latestSchemaVersion() int {
+	if len(migrations) == 0 {
+		return 0
+	}
+	return migrations[len(migrations)-1].version
+}
+
+func applyMigration(
+	conn *sql.DB,
+	item migration,
+) error {
+	tx, err := conn.Begin()
+	if err != nil {
+		return fmt.Errorf(
+			"begin transaction %d: %w",
+			item.version,
+			err,
+		)
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	for _, statement := range item.statements {
+		if _, err := tx.Exec(statement); err != nil {
 			return fmt.Errorf(
-				"migrate sqlite: %w",
+				"apply migration %d: %w",
+				item.version,
 				err,
 			)
 		}
 	}
+
+	if _, err := tx.Exec(
+		`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`,
+		item.version,
+		time.Now().UTC().Format(time.RFC3339Nano),
+	); err != nil {
+		return fmt.Errorf(
+			"record migration %d: %w",
+			item.version,
+			err,
+		)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf(
+			"commit transaction %d: %w",
+			item.version,
+			err,
+		)
+	}
+
+	committed = true
 	return nil
 }
