@@ -44,3 +44,18 @@ func DBPath() (
 		"pinter.sqlite",
 	), nil
 }
+
+func BackupDir() (
+	string,
+	error,
+) {
+	dir, err := DataDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(
+		dir,
+		"backups",
+	), nil
+}

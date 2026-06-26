@@ -207,3 +207,12 @@ func (s *Service) ImportSSHConfig(
 	}
 	return created, updated, nil
 }
+
+func (s *Service) BackupDatabase(
+	destination string,
+) error {
+	return db.Backup(
+		s.db,
+		destination,
+	)
+}
